@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CogniMed AI | Clinical Architecture Wizard</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --panel: #ffffff;
+            --primary: #2563eb;
+            --accent: #3b82f6;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .wizard-container {
+            width: 95%;
+            max-width: 1300px;
+            height: 850px;
+            background: var(--panel);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .sidebar {
+            background: #f1f5f9;
+            border-right: 1px solid var(--border);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: 0.3s;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .step-link:hover { background: #e2e8f0; }
+
+        .step-link.active {
+            background: white;
+            color: var(--primary);
+            border-color: var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .step-link.completed { color: var(--success); }
+
+        .num-box {
+            width: 28px; height: 28px; border-radius: 6px;
+            background: #cbd5e1; color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
+        }
+
+        .active .num-box { background: var(--primary); }
+        .completed .num-box { background: var(--success); }
+
+        .main-content {
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .step-view {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .step-view.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .phase-tag { 
+            font-weight: 800; color: var(--primary); 
+            text-transform: uppercase; font-size: 0.75rem; 
+            letter-spacing: 1.5px; margin-bottom: 10px; display: block;
+        }
+
+        h1 { font-size: 2.2rem; margin: 0 0 30px 0; letter-spacing: -1px; }
+
+        .image-container {
+            width: 100%;
+            height: 380px;
+            background: #fdfdfd;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 25px;
+        }
+
+        .explanation-box {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 16px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .explanation-box h3 { margin-top: 0; font-size: 1.1rem; margin-bottom: 12px; }
+        .explanation-box p { font-size: 0.95rem; line-height: 1.7; color: var(--text-light); margin: 0; }
+
+        .model-card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .model-card h3 { margin-top: 0; font-size: 1rem; margin-bottom: 15px; }
+
+        .model-tag {
+            display: inline-block;
+            background: #eff6ff;
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin: 4px;
+            border: 1px solid #dbeafe;
+        }
+
+        .navigation {
+            margin-top: auto;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-next { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-next:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .btn-back { background: #f1f5f9; color: var(--text-light); }
+    </style>
+</head>
+<body>
+
+<div class="wizard-container">
+    <div class="sidebar" id="sidebar-links"></div>
+
+    <div class="main-content">
+        <div id="content-mount"></div>
+
+        <div class="navigation">
+            <button class="btn btn-back" onclick="changeStep(-1)">Back</button>
+            <button id="nextAction" class="btn btn-next" onclick="changeStep(1)">Next Phase →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const architectData = [
+        {
+            id: 1,
+            phase: "Input Processing",
+            title: "Data Sanitization & Language ID",
+            desc: "The entry point uses FastText for language detection across 176 languages. It filters medical terminology via a custom Hunspell engine and applies ethical guards to block 200+ non-clinical topics.",
+            models: ["FastText lid.176", "Hunspell Medical", "Ethical Filter", "Sentiment Analyzer"],
+            img: "image/step1.png"
+        },
+        {
+            id: 2,
+            phase: "Understanding Layer",
+            title: "Semantic Feature Extraction",
+            desc: "Leverages BioBERT (110M parameters) to extract medical entities. The model identifies symptoms and maps intent classes with high accuracy using deep context attention layers.",
+            models: ["spaCy Clinical NER", "BioBERT", "BERT-base-uncased", "Intent Classification"],
+            img: "image/step 2.png"
+        },
+        {
+            id: 3,
+            phase: "Search & Retrieval",
+            title: "FAISS Vector Similarity Search",
+            desc: "Symptoms are vectorized into 384d space. We query a FAISS index containing 50,000 cases to find clinical neighbors, ensuring the engine stays grounded in real-world data.",
+            models: ["Sentence-BERT", "FAISS Vector Index", "KNN Algorithm", "User History Model"],
+            img: "image/step 3.png"
+        },
+        {
+            id: 4,
+            phase: "The Brain (Classification)",
+            title: "Disease & Severity Prediction",
+            desc: "The core engine. It runs ensembles of Random Forest and XGBoost to classify inputs across 150 disease classes, while Gradient Boosting determines clinical urgency.",
+            models: ["Random Forest", "XGBoost", "Emergency Classifier", "Specialty Prediction"],
+            img: "image/step 4.png"
+        },
+        {
+            id: 5,
+            phase: "Recommendations",
+            title: "Doctor & Treatment Matching",
+            desc: "Matches patients to providers using Collaborative Filtering. The ranking system factors in distance and ratings to suggest the best treatment facility and home remedies.",
+            models: ["Doctor Matching", "Hospital Ranking", "Clinical Guidelines", "Treatment Rules"],
+            img: "image/step 5.png"
+        },
+        {
+            id: 6,
+            phase: "Rating & Feedback",
+            title: "AI Confidence Calibration",
+            desc: "Ensures safety via Platt Scaling. A strict 75% confidence threshold is enforced. If the AI is unsure, it triggers a follow-up loop instead of providing a diagnosis.",
+            models: ["Platt Scaling", "Isotonic Regression", "Bayesian Average", "Satisfaction Model"],
+            img: "image/step 6.png"
+        },
+        {
+            id: 7,
+            phase: "Conclusion & Output",
+            title: "Report Generation & Follow-up",
+            desc: "Final delivery phase. DialoGPT generates empathetic dialogue, while the Data-to-Text engine builds PDF reports and the LSTM model crafts follow-up questions.",
+            models: ["DialoGPT", "Medical Report Gen", "LSTM Sequence Model", "PDF Engine"],
+            img: "image/step 7.png"
+        }
+    ];
+
+    let currentIdx = 0;
+
+    function updateUI() {
+        const step = architectData[currentIdx];
+        
+        // Sidebar update
+        const sidebar = document.getElementById('sidebar-links');
+        sidebar.innerHTML = architectData.map((s, i) => `
+            <div class="step-link ${i === currentIdx ? 'active' : ''} ${i < currentIdx ? 'completed' : ''}" onclick="goToStep(${i})">
+                <div class="num-box">${i < currentIdx ? '✓' : i + 1}</div>
+                Phase ${i + 1}: ${s.phase}
+            </div>
+        `).join('');
+
+        // Placeholder SVG if local image fails
+        const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='520' viewBox='0 0 900 520'%3E%3Crect width='900' height='520' fill='%23edf2f7'/%3E%3Ctext x='50%25' y='45%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter, sans-serif' font-size='24' fill='%23475569'%3E[ Phase Image ${step.id} ]%3C/text%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter, sans-serif' font-size='14' fill='%2364748b'%3ERequired file: ${step.img}%3C/text%3E%3C/svg%3E";
+        
+        const container = document.getElementById('content-mount');
+        container.innerHTML = `
+            <div class="step-view active">
+                <span class="phase-tag">Technical Phase ${step.id} / 7</span>
+                <h1>${step.title}</h1>
+                <div class="image-container">
+                    <img src="${step.img}" alt="${step.title}" onerror="this.onerror=null; this.src='${placeholder}';">
+                </div>
+                <div class="info-grid">
+                    <div class="explanation-box">
+                        <h3>Detailed Workflow</h3>
+                        <p>${step.desc}</p>
+                    </div>
+                    <div class="model-card">
+                        <h3>Engineered Models</h3>
+                        ${step.models.map(m => `<span class="model-tag">${m}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('nextAction').innerText = currentIdx === 6 ? "Finish Walkthrough" : "Next Phase →";
+    }
+
+    function changeStep(dir) {
+        const newIdx = currentIdx + dir;
+        if (newIdx >= 0 && newIdx < architectData.length) {
+            currentIdx = newIdx;
+            updateUI();
+        } else if (newIdx === architectData.length) {
+            alert("CogniMed AI Architecture Walkthrough Complete.");
+        }
+    }
+
+    function goToStep(index) {
+        if (index >= 0 && index < architectData.length) {
+            currentIdx = index;
+            updateUI();
+        }
+    }
+
+    updateUI();
+</script>
+
+</body>
+</html>
